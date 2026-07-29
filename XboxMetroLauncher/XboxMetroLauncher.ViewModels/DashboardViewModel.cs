@@ -314,6 +314,16 @@ public sealed class DashboardViewModel : ObservableObject
 
 	public IEnumerable<string> LibraryPaths => _library.LibraryPaths;
 
+	public IGameLibraryService LibraryService => _libraryService;
+    
+	public ISearchService SearchService => _searchService;
+
+    public object Library => _library;                 // used by the aggregator
+
+    public void Audio_Play(string cue) => _audioService.Play(cue);
+
+    public IAudioService Audio => _audioService;
+
 	public double LibraryMenuScrollOffset
 	{
 		get
@@ -2420,6 +2430,8 @@ public sealed class DashboardViewModel : ObservableObject
 
 	public event EventHandler<DashboardToastRequest>? ToastRequested;
 
+	public event EventHandler<string>? SearchSubmitted;
+
 	[DllImport("user32.dll")]
 	[return: MarshalAs(UnmanagedType.Bool)]
 	private static extern bool SetForegroundWindow(nint hWnd);
@@ -4064,16 +4076,19 @@ public sealed class DashboardViewModel : ObservableObject
 
 	private async Task SubmitSearchAsync()
 	{
-		if (string.IsNullOrWhiteSpace(SearchQuery))
-		{
-			StatusMessage = "Type a Bing search first";
-			return;
-		}
-		await _searchService.SearchWebAsync(SearchQuery, Settings.BingSearchBaseUrl);
-		StatusMessage = "Searching Bing for " + SearchQuery;
-		CloseSearchOverlay(playSound: false);
-		_audioService.Play("select");
-	}
+	   if (string.IsNullOrWhiteSpace(SearchQuery))
+	   {
+	       StatusMessage = "Type a Bing search first";
+		   return;
+		 }
+	     StatusMessage = "Searching Bing for " + SearchQuery;
+         CloseSearchOverlay(playSound: false);
+         _audioService.Play("select");
+
+		 // Let the Bing tab build its results surface; keep the browser fallback
+         // available via the result tiles' "Open in browser" action.
+         SearchSubmitted?.Invoke(this, SearchQuery);
+    	}
 
 	private void OpenSearch()
 	{
@@ -4312,6 +4327,14 @@ public sealed class DashboardViewModel : ObservableObject
 		RefreshSetupDestinationState();
 		StatusMessage = "Added " + game.Title + " to " + destination;
 	}
+
+	public void LaunchById(string id)
+    {
+      var game = _library.Games.FirstOrDefault(g => g.Id == id);
+      if (game is null) return;
+      _ = _launchService.LaunchAsync(game, CancellationToken.None);
+      _audioService.Play("select");
+    }
 
 	private static string? PromptForAddExecutableUrl()
 	{
