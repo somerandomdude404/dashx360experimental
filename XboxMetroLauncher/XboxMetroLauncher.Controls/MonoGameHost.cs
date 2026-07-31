@@ -1,11 +1,9 @@
 using System.Windows.Forms.Integration;
 using Microsoft.Xna.Framework;
-using DashX360.Avatar.Renderer;
-using DashX360.Avatar.Core;
+using XboxMetroLauncher.Models;
 
 namespace XboxMetroLauncher.Controls
 {
-    // Hosts a MonoGame XNA window inside WPF using WindowsFormsHost
     public class MonoGameHost : WindowsFormsHost
     {
         private readonly AvatarGameBridge _game;
@@ -23,7 +21,6 @@ namespace XboxMetroLauncher.Controls
         }
     }
 
-    // Internal MonoGame Game class bridging the renderer
     internal class AvatarGameBridge : Game
     {
         private GraphicsDeviceManager _graphics;
