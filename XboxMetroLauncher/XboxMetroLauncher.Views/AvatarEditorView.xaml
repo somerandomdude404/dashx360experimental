@@ -1,0 +1,39 @@
+<Window x:Class="XboxMetroLauncher.Views.AvatarEditorView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:XboxMetroLauncher.Controls"
+        Title="Avatar Editor" Height="800" Width="1000" WindowStyle="None" Background="Black">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- 3D Avatar Render Area -->
+        <controls:MonoGameHost x:Name="AvatarRenderHost" Grid.Column="0" />
+
+        <!-- Customization Slots -->
+        <ScrollViewer Grid.Column="1" Background="#FF1A1A1A">
+            <StackPanel Margin="20">
+                <TextBlock Text="CHANGE MY STYLE" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,0,0,20"/>
+                
+                <TextBlock Text="Body Type" Foreground="Gray"/>
+                <ComboBox x:Name="CbBodyType" Margin="0,5,0,15" SelectionChanged="OnSettingsChanged">
+                    <ComboBoxItem Content="Male" IsSelected="True"/>
+                    <ComboBoxItem Content="Female"/>
+                </ComboBox>
+
+                <TextBlock Text="Height" Foreground="Gray"/>
+                <Slider x:Name="SlHeight" Minimum="0.8" Maximum="1.5" Value="1.0" Margin="0,5,0,15" ValueChanged="OnSettingsChanged"/>
+
+                <TextBlock Text="Wardrobe Slots" Foreground="Gray" Margin="0,10,0,5"/>
+                <Button Content="Change Hat" Margin="0,5,0,5" Height="40" Click="OpenItemPicker"/>
+                <Button Content="Change Top" Margin="0,5,0,5" Height="40" Click="OpenItemPicker"/>
+                <Button Content="Change Bottom" Margin="0,5,0,5" Height="40" Click="OpenItemPicker"/>
+                <Button Content="Change Shoes" Margin="0,5,0,5" Height="40" Click="OpenItemPicker"/>
+
+                <Button Content="Save to Profile" Margin="0,20,0,5" Height="40" Background="#FF107C10" Foreground="White" Click="SaveAvatar"/>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>
