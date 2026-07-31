@@ -1,6 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
-using DashX360.Avatar.Core;
+using XboxMetroLauncher.Models;
 
 namespace XboxMetroLauncher.Views
 {
