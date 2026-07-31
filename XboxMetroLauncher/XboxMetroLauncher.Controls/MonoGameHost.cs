@@ -1,34 +1,66 @@
-public sealed class AvatarRenderer : IDisposable {
-    private readonly Model _body;
-    private readonly Dictionary<AvatarSlot, Model> _worn = new();
-    private SkinningData _skin;
+using System.Windows.Forms.Integration;
+using Microsoft.Xna.Framework;
+using DashX360.Avatar.Renderer;
+using DashX360.Avatar.Core;
 
-    public AvatarRenderer(AvatarDescription desc, ContentManager content) {
-        _body = content.Load<Model>($"Avatar/Body/{desc.BodyType}");
-        _skin = _body.Tag as SkinningData
-            ?? throw new InvalidOperationException("Missing SkinningData");
-        foreach (var (slot, guid) in desc.EnumerateWornItems())
-            _worn[slot] = content.Load<Model>($"Avatar/Items/{guid}");
-    }
+namespace XboxMetroLauncher.Controls
+{
+    // Hosts a MonoGame XNA window inside WPF using WindowsFormsHost
+    public class MonoGameHost : WindowsFormsHost
+    {
+        private readonly AvatarGameBridge _game;
 
-    public void Draw(Matrix world, Matrix view, Matrix projection,
-                     AvatarAnimation anim) {
-        var bones = anim.GetBoneTransforms(_skin);      // Matrix[]
-        foreach (var mesh in _body.Meshes)
-            DrawSkinned(mesh, bones, world, view, projection);
-        foreach (var item in _worn.Values)
-            foreach (var mesh in item.Meshes)
-                DrawSkinned(mesh, bones, world, view, projection);
-    }
-
-    private void DrawSkinned(ModelMesh m, Matrix[] bones,
-                             Matrix w, Matrix v, Matrix p) {
-        foreach (var part in m.MeshParts) {
-            part.Effect.Parameters["Bones"].SetValue(bones);
-            part.Effect.Parameters["WorldViewProj"].SetValue(w * v * p);
-            // eye/mouth texture swap driven by AvatarExpression:
-            // part.Effect.Parameters["FaceTex"].SetValue(_faceTextures[expr]);
+        public MonoGameHost()
+        {
+            _game = new AvatarGameBridge();
+            this.Child = _game.Window.Form;
         }
-        m.Draw();
+
+        public void UpdateAvatar(byte[] descriptionBuffer)
+        {
+            var desc = AvatarDescription.CreateFromBuffer(descriptionBuffer);
+            _game.UpdateAvatar(desc);
+        }
+    }
+
+    // Internal MonoGame Game class bridging the renderer
+    internal class AvatarGameBridge : Game
+    {
+        private GraphicsDeviceManager _graphics;
+        private AvatarRenderer _renderer;
+
+        public AvatarGameBridge()
+        {
+            _graphics = new GraphicsDeviceManager(this);
+            _graphics.PreferredBackBufferWidth = 600;
+            _graphics.PreferredBackBufferHeight = 800;
+            Content.RootDirectory = "Content";
+            Window.Form.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            Window.Form.TopLevel = false;
+        }
+
+        protected override void LoadContent()
+        {
+            base.LoadContent();
+            _renderer = new AvatarRenderer(GraphicsDevice, Content);
+            _renderer.LoadAvatar(AvatarDescription.CreateRandom()); // Default load
+        }
+
+        public void UpdateAvatar(AvatarDescription desc)
+        {
+            _renderer.LoadAvatar(desc);
+        }
+
+        protected override void Draw(GameTime gameTime)
+        {
+            GraphicsDevice.Clear(Microsoft.Xna.Framework.Color.CornflowerBlue);
+
+            Matrix view = Matrix.CreateLookAt(new Vector3(0, 2, 4), new Vector3(0, 1, 0), Vector3.Up);
+            Matrix proj = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, 600f/800f, 0.1f, 100f);
+            Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
+
+            _renderer?.Draw(world, view, proj);
+            base.Draw(gameTime);
+        }
     }
 }
